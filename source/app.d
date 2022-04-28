@@ -12,6 +12,7 @@ const string helpString = `Usage: doomsday-clock [args]
     -h, --help              Displays this message
     -y, --year              Sets cerain year for clock
     -s, --short             Displays value as clock
+    -c, --seconds           Displays value in seconds
     -a, --all               Displays all known changes
 `;
 
@@ -19,9 +20,6 @@ const auto glRegexp = regex(`(\d{4})\<.*?(it is .*? midnight)`, "gmi");
 const auto shRegexp = regex(`(it|is|still|and|to|midnight|a | )`, "gi");
 
 const int firstYear = 1947;
-int hours = 23;
-int minutes = 60;
-int seconds = 60;
 
 string toDigit(int d) {
     string res = d.to!string;
@@ -95,31 +93,17 @@ int main(string[] args) {
     string value = arr[current];
 
     if (args.canFind("-s") || args.canFind("--short")) {
-        string sh = value.replaceAll(shRegexp, "");
-        if (sh.canFind("HALF")) {
-            sh = sh.replace("HALF", "");
-            seconds = 30;
-            --minutes;
-        }
-        if (sh.canFind("MINUTES")) {
-            sh = sh.replace("MINUTES", "");
-            int l = sh.to!int;
-            minutes = minutes - l;
-        }
-        if (sh.canFind("SECONDS")) {
-            sh = sh.replace("SECONDS", "");
-            int l = sh.to!int;
-            seconds = seconds - l;
-            --minutes;
-            if (seconds < 0) {
-                seconds = 60 + seconds;
-                --minutes;
-            }
-        }
-        if (seconds == 60) seconds = 0;
-        writeln(hours.toDigit, ":", minutes.toDigit, ":", seconds.toDigit);
+        Time t = value.compileStringTime;
+        writeln(t.hours.toDigit, ":", t.minutes.toDigit, ":", t.seconds.toDigit);
         return 0;
     } else
+    if (args.canFind("-c") || args.canFind("--seconds")) {
+        Time t = value.compileStringTime;
+        const int day = 24 * 60 * 60;
+        const int time = t.hours * 60 * 60 + t.minutes * 60 + t.seconds;
+        writeln(day - time);
+        return 0;
+    }  else
     if (args.canFind("-a") || args.canFind("--all")) {
         for (int i = 0; i < keys.length; i ++) {
             writeln(keys[i], " ", arr[keys[i]]);
@@ -130,4 +114,44 @@ int main(string[] args) {
     writeln(value);
 
     return 0;
+}
+
+Time compileStringTime(string str) {
+    Time t = Time(23, 60, 60);
+    string sh = str.replaceAll(shRegexp, "");
+    if (sh.canFind("HALF")) {
+        sh = sh.replace("HALF", "");
+        t.seconds = 30;
+        --t.minutes;
+    }
+    if (sh.canFind("MINUTES")) {
+        sh = sh.replace("MINUTES", "");
+        int l = sh.to!int;
+        t.minutes = t.minutes - l;
+    }
+    if (sh.canFind("SECONDS")) {
+        sh = sh.replace("SECONDS", "");
+        int l = sh.to!int;
+        t.seconds = t.seconds - l;
+        --t.minutes;
+        if (t.seconds < 0) {
+            t.seconds = 60 + t.seconds;
+            --t.minutes;
+        }
+    }
+    if (t.seconds == 60) t.seconds = 0;
+
+    return t;
+}
+
+struct Time {
+    public int hours;
+    public int minutes;
+    public int seconds;
+    
+    this(int h, int m, int s) {
+        this.hours = h;
+        this.minutes = m;
+        this.seconds = s;
+    }
 }
