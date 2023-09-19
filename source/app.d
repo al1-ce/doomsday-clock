@@ -3,10 +3,13 @@ import std.net.curl;
 import std.regex;
 import std.conv: to;
 import std.algorithm;
-import std.string: isNumeric;
+import std.string: isNumeric, capitalize;
 import std.array: split, replace;
+import std.datetime: Clock;
+import std.uni: toUpper;
 
 const string page_url = "https://thebulletin.org/doomsday-clock/timeline/";
+const string curr_url = "https://thebulletin.org/doomsday-clock/current-time/";
 const string helpString = `Usage: doomsday-clock [args]
 
     -h, --help              Displays this message
@@ -17,6 +20,7 @@ const string helpString = `Usage: doomsday-clock [args]
 `;
 
 const auto glRegexp = regex(`(\d{4})\<.*?(it is .*? midnight)`, "gmi");
+const auto crRegexp = regex(`(it is .*? midnight)`, "gmi");
 const auto shRegexp = regex(`(it|is|still|and|to|midnight|a | )`, "gi");
 
 const int firstYear = 1947;
@@ -47,10 +51,15 @@ int main(string[] args) {
         // writeln(str[1], str[2]);
         arr[str[1]] = str[2];
         keys ~= str[1];
-        if (current == "") {
-            current = str[1];
-        }
     }
+
+    string cpage = get!HTTP(curr_url).to!string;
+    auto ccl = matchAll(cpage, crRegexp);
+    
+    current =  Clock.currTime.year.to!string;
+    keys = current ~ keys;
+    arr[current] = (ccl.front)[1].toUpper;
+
 
     string year = "";
 
