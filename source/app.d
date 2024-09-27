@@ -39,7 +39,7 @@ int main(string[] args) {
         writeln(helpString);
         return 0;
     }
-    
+
     string page = get!HTTP(page_url).to!string;
 
     auto cl = matchAll(page, glRegexp);
@@ -55,7 +55,7 @@ int main(string[] args) {
 
     string cpage = get!HTTP(curr_url).to!string;
     auto ccl = matchAll(cpage, crRegexp);
-    
+
     current =  Clock.currTime.year.to!string;
     keys = current ~ keys;
     arr[current] = (ccl.front)[1].toUpper;
@@ -157,7 +157,7 @@ struct Time {
     public int hours;
     public int minutes;
     public int seconds;
-    
+
     this(int h, int m, int s) {
         this.hours = h;
         this.minutes = m;
